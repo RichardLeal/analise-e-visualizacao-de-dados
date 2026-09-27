@@ -14,6 +14,12 @@ import plotly.graph_objects as go
 from shapely.geometry import mapping, shape
 from shapely.ops import unary_union
 
+PORTO_ALEGRE_GREEN = "#1B5E45"
+PORTO_ALEGRE_GOLD = "#805D0F"
+PORTO_ALEGRE_BLUE = "#3669B2"
+PORTO_ALEGRE_WHITE = "#FFFFFF"
+PORTO_ALEGRE_RED = "#E40A24"
+
 
 def build_yearly_median_chart(df: pd.DataFrame) -> go.Figure:
     median_value_by_year = (
@@ -27,13 +33,40 @@ def build_yearly_median_chart(df: pd.DataFrame) -> go.Figure:
         x="ano",
         y="base_de_calculo",
         markers=True,
+        color_discrete_sequence=[PORTO_ALEGRE_GREEN],
         title="Valor mediano dos apartamentos por ano",
         labels={
             "ano": "Ano",
             "base_de_calculo": "Base de cálculo mediana (R$)",
         },
     )
-    fig.update_yaxes(tickprefix="R$ ", tickformat=",.0f", showgrid=True)
+    fig.update_traces(
+        line={"color": PORTO_ALEGRE_GREEN, "width": 3},
+        marker={
+            "color": PORTO_ALEGRE_GOLD,
+            "size": 9,
+            "line": {"color": PORTO_ALEGRE_WHITE, "width": 1.5},
+        },
+    )
+    fig.update_layout(
+        paper_bgcolor=PORTO_ALEGRE_WHITE,
+        plot_bgcolor=PORTO_ALEGRE_WHITE,
+        font={"color": "#252B28"},
+        title={"font": {"color": PORTO_ALEGRE_BLUE}},
+        hoverlabel={
+            "bgcolor": PORTO_ALEGRE_WHITE,
+            "bordercolor": PORTO_ALEGRE_RED,
+            "font": {"color": "#252B28"},
+        },
+    )
+    fig.update_xaxes(showgrid=False, linecolor="#D7DED8")
+    fig.update_yaxes(
+        tickprefix="R$ ",
+        tickformat=",.0f",
+        showgrid=True,
+        gridcolor="#E5EAE6",
+        zeroline=False,
+    )
     fig.update_traces(
         hovertemplate="Ano: %{x}<br>Base de cálculo mediana: R$ %{y:,.0f}<extra></extra>"
     )

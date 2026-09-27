@@ -26,7 +26,12 @@ def load_boundaries():
 
 
 st.set_page_config(page_title="Apartamentos em Porto Alegre — ITBI", layout="wide")
-st.title("Quanto custa um apartamento em Porto Alegre?")
+title_column, crest_column = st.columns([0.86, 0.14], vertical_alignment="center")
+with title_column:
+    st.title(":blue[Quanto custa um apartamento em Porto Alegre?]")
+with crest_column:
+    with st.container(horizontal_alignment="right"):
+        st.image(Path(__file__).parent / "assets" / "brasao_porto_alegre.svg", width=86)
 
 df = load_apartments()
 min_year = int(df["ano"].min())
@@ -48,7 +53,7 @@ st.caption(
 
 st.plotly_chart(build_yearly_median_chart(df_filtered), width="stretch")
 
-st.subheader("Valor mediano por m² por bairro")
+st.subheader(":blue[Valor mediano por m² por bairro]")
 st.caption(
     "A cor representa a mediana do valor por m² das transações em cada bairro. "
     "Bairros sem transações aparecem em cinza."

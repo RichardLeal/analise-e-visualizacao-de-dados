@@ -12,6 +12,7 @@ Todos os comandos abaixo são executados dentro desta pasta (`atividade02_dashbo
 |---|---|
 | `app.py` | Aplicação Streamlit |
 | `charts.py` | Construtores dos gráficos; um por visualização |
+| `.streamlit/config.toml` | Tema visual do dashboard inspirado na bandeira e no brasão de Porto Alegre |
 | `pipeline.py` | Carga da API e funil de preparação (mesmas regras da Atividade 01) |
 | `geo.py` | Limites oficiais dos bairros e casamento com os nomes do ITBI |
 | `prepare_data.py` | Gera os arquivos em `data/` |
@@ -21,7 +22,7 @@ Todos os comandos abaixo são executados dentro desta pasta (`atividade02_dashbo
 | `data/bairros_correspondencia.csv` | Nome no ITBI → nome oficial |
 | `data/funil.csv` | Registros restantes após cada etapa |
 | `docs/escopo.md` | Público, perguntas, gráficos e filtros do dashboard |
-| `docs/padroes_graficos.md` | Padrão para implementar e integrar novos gráficos |
+| `docs/padroes_de-design.md` | Padrão de design, interação e implementação das visualizações |
 | `tasks.md` | Tarefas do grupo e status |
 | `atividade02_dashboard_streamlit.ipynb` | Notebook da atividade (com o Registro do grupo) |
 
