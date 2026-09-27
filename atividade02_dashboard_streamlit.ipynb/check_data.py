@@ -1,9 +1,10 @@
-"""Checks the prepared data against the results delivered in Atividade 01.
+"""Checks both the Activity 01 reference and the prepared dashboard data.
 
-1. Re-runs the funnel in "Atividade 01 mode" (blank neighborhoods kept) and
-   compares counts and medians with the values printed in the delivered notebook.
+1. Re-runs the Activity 01 funnel with blank neighborhoods retained and
+    compares counts and medians with the delivered notebook.
 2. Checks that data/apartamentos_itbi_poa.parquet matches a fresh run of the
-   default pipeline and respects the validity rules.
+    default pipeline, which excludes blank neighborhoods, and respects the
+    validity rules.
 
 Usage: python check_data.py   (run prepare_data.py first)
 """
@@ -17,7 +18,7 @@ import pipeline
 
 DATA_DIR = Path(__file__).parent / "data"
 
-# Values copied from the outputs of the Atividade 01 notebook
+# Values copied from the outputs of the Activity 01 notebook
 REFERENCE_FUNNEL = [326623, 324323, 119493, 119492, 118655, 116282]
 REFERENCE_BY_YEAR = {  # ano: (n, median base_de_calculo, median valor_m2)
     2020: (13817, 232000.00, 4326.920),
@@ -47,7 +48,7 @@ def check(label, ok):
 def main():
     raw = pipeline.load_raw(DATA_DIR / "raw")
 
-    print("== 1. Atividade 01 reproduction ==")
+    print("== 1. Activity 01 reference (blank neighborhoods retained) ==")
     ref, funnel = pipeline.prepare(raw, drop_blank_bairro=False)
     check(f"funnel {funnel['registros'].tolist()}", funnel["registros"].tolist() == REFERENCE_FUNNEL)
 
@@ -69,7 +70,7 @@ def main():
         check(f"{name}: n={int(row['size'])}, median R$/m²={row['median']:,.3f}",
               row["size"] == n and abs(row["median"] - m2) < 0.001)
 
-    print("\n== 2. Generated file ==")
+    print("\n== 2. Dashboard data (blank neighborhoods excluded) ==")
     df = pd.read_parquet(DATA_DIR / "apartamentos_itbi_poa.parquet")
     expected = pipeline.to_output(pipeline.prepare(raw)[0])
     check(f"parquet has {len(df)} rows, same as a fresh run", len(df) == len(expected))
