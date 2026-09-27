@@ -3,12 +3,14 @@
 Run: streamlit run app.py
 """
 
+import json
 from pathlib import Path
 
 import pandas as pd
 import streamlit as st
+from streamlit_folium import st_folium
 
-from charts import build_yearly_median_chart
+from charts import build_neighborhood_value_map, build_yearly_median_chart
 
 DATA_DIR = Path(__file__).parent / "data"
 
@@ -18,12 +20,57 @@ def load_apartments():
     return pd.read_parquet(DATA_DIR / "apartamentos_itbi_poa.parquet")
 
 
+@st.cache_data
+def load_boundaries():
+    return json.loads((DATA_DIR / "bairros_poa.geojson").read_text(encoding="utf-8"))
+
+
 st.set_page_config(page_title="Apartamentos em Porto Alegre — ITBI", layout="wide")
 st.title("Quanto custa um apartamento em Porto Alegre?")
 
 df = load_apartments()
-st.caption(f"{len(df):,} apartamentos com ITBI entre 2020 e 2025".replace(",", "."))
+min_year = int(df["ano"].min())
+max_year = int(df["ano"].max())
+year_range = st.sidebar.slider(
+    "Período (ano)",
+    min_value=min_year,
+    max_value=max_year,
+    value=(min_year, max_year),
+    step=1,
+    key="year_range",
+)
+df_filtered = df.loc[df["ano"].between(*year_range)]
 
-st.plotly_chart(build_yearly_median_chart(df), width="stretch")
+st.caption(
+    f"{len(df_filtered):,} apartamentos com ITBI entre {year_range[0]} e {year_range[1]}"
+    .replace(",", ".")
+)
+
+st.plotly_chart(build_yearly_median_chart(df_filtered), width="stretch")
+
+st.subheader("Valor mediano por m² por bairro")
+st.caption(
+    "A cor representa a mediana do valor por m² das transações em cada bairro. "
+    "Bairros sem transações aparecem em cinza."
+)
+boundaries = load_boundaries()
+st_folium(
+    build_neighborhood_value_map(df_filtered, boundaries),
+    width=None,
+    height=650,
+    key="neighborhood_value_map_city_only",
+)
+
+boundary_names = {
+    feature["properties"]["bairro_oficial"] for feature in boundaries["features"]
+}
+unmapped = df_filtered.loc[~df_filtered["bairro_oficial"].isin(boundary_names)]
+if not unmapped.empty:
+    unmapped_counts = unmapped["bairro"].value_counts()
+    unmapped_summary = ", ".join(
+        f"{neighborhood} ({count} registros)"
+        for neighborhood, count in unmapped_counts.items()
+    )
+    st.caption(f"Sem polígono oficial, portanto fora do mapa: {unmapped_summary}.")
 
 # TODO (T06-T12): filters, KPIs and remaining charts — see docs/escopo.md

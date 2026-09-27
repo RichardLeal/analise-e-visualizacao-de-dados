@@ -39,10 +39,11 @@ Só começar depois do T01.
 - [ ] **T10 — Gráfico 2 (P2/P3), Altair.** Responsável: ___
   Barras horizontais ordenadas com a mediana por bairro, respeitando o mínimo de registros. Tooltip com o número de registros; bairros selecionados em destaque.
   Implementar em `charts.py` como construtor que recebe os dados filtrados e retorna o gráfico Altair; `app.py` renderiza o gráfico.
-- [ ] **T11 — Gráfico 3 (P3), Folium.** Responsável: ___
+- [x] **T11 — Gráfico 3 (P3), Folium.** Responsável: ___
   Mapa coroplético com o valor/m² mediano por `bairro_oficial` (`folium.Choropleth` + `streamlit-folium`). Bairros sem dados ficam em cinza.
   Implementar em `charts.py` como construtor que recebe os dados filtrados e os limites geográficos e retorna o mapa; `app.py` o renderiza com `st_folium`.
   Seguir [`docs/padroes_graficos.md`](docs/padroes_graficos.md) para a separação entre cálculo, construção e renderização.
+  O mapa mostra os 94 polígonos oficiais; `JAR ITU SABARA` não possui polígono e é informado separadamente.
 - [ ] **T12 — Textos de apoio.** Responsável: ___
   Eixos com unidade (R$, R$/m²) e uma ou duas frases de leitura abaixo de cada gráfico. Incluir o aviso de que a base de cálculo é a base fiscal do imposto, e não o preço de mercado.
 

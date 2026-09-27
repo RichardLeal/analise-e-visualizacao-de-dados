@@ -44,6 +44,8 @@ st.subheader("Mapa por bairro")
 st_folium(build_price_per_m2_map(df_filtrado, boundaries))
 ```
 
+Para o mapa de bairros, mantenha cada polígono do GeoJSON mesmo quando não houver transações correspondentes. Use uma cor neutra para áreas sem mediana, inclua a mediana no tooltip, ajuste o enquadramento ao conjunto dos polígonos e destaque o contorno municipal sem mapa-base. Categorias sem geometria, como `JAR ITU SABARA`, não podem ser desenhadas; informe-as separadamente no app em vez de associá-las artificialmente a outro bairro.
+
 ## Regras para cada novo gráfico
 
 1. Dê a cada gráfico um construtor próprio em `charts.py`; não acumule lógicas de gráficos diferentes numa única função.
