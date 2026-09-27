@@ -13,7 +13,7 @@ Legenda: `[x]` feito · `[ ]` a fazer. Preencham o responsável de cada tarefa.
   - [ ] "JAR ITU SABARA" (134 registros, fica fora do mapa): manter nos outros gráficos ou excluir?
   - [ ] Incluir o filtro de faixa de área privativa (m²)?
   - [ ] Nome dos bairros na tela: oficial com acento ou o do ITBI?
-- [x] **T02 — Estrutura do projeto.** Pasta desta atividade com `app.py`, `pipeline.py`, `geo.py`, `prepare_data.py`, `check_data.py`, `data/`, `docs/`, `requirements.txt`, `README.md`.
+- [x] **T02 — Estrutura do projeto.** Pasta desta atividade com `app.py`, `charts.py`, `pipeline.py`, `geo.py`, `prepare_data.py`, `check_data.py`, `data/`, `docs/`, `requirements.txt`, `README.md`.
 - [x] **T03 — Preparação dos dados.** O `prepare_data.py` aplica o funil da Atividade 01 e gera `data/apartamentos_itbi_poa.parquet` (116.198 apartamentos).
 - [x] **T04 — Conferência contra a Atividade 01.** O `check_data.py` bate o funil, as medianas por ano e as medianas por bairro. Todos os itens passam.
 - [x] **T05 — Mapa dos bairros.** O `data/bairros_poa.geojson` tem 94 bairros oficiais; 84 dos 85 bairros da base aparecem no mapa.
@@ -35,10 +35,14 @@ Só começar depois do T01.
   Três `st.metric`: número de apartamentos, valor mediano e valor/m² mediano da seleção.
 - [ ] **T09 — Gráfico 1 (P1), Plotly.** Responsável: ___
   Linha com a mediana por ano, com a cidade como referência (tracejada) e uma linha por bairro selecionado. Segue o filtro de métrica.
+  Implementar em `charts.py` como construtor que recebe os dados filtrados e retorna a figura; `app.py` renderiza a figura.
 - [ ] **T10 — Gráfico 2 (P2/P3), Altair.** Responsável: ___
   Barras horizontais ordenadas com a mediana por bairro, respeitando o mínimo de registros. Tooltip com o número de registros; bairros selecionados em destaque.
+  Implementar em `charts.py` como construtor que recebe os dados filtrados e retorna o gráfico Altair; `app.py` renderiza o gráfico.
 - [ ] **T11 — Gráfico 3 (P3), Folium.** Responsável: ___
   Mapa coroplético com o valor/m² mediano por `bairro_oficial` (`folium.Choropleth` + `streamlit-folium`). Bairros sem dados ficam em cinza.
+  Implementar em `charts.py` como construtor que recebe os dados filtrados e os limites geográficos e retorna o mapa; `app.py` o renderiza com `st_folium`.
+  Seguir [`docs/padroes_graficos.md`](docs/padroes_graficos.md) para a separação entre cálculo, construção e renderização.
 - [ ] **T12 — Textos de apoio.** Responsável: ___
   Eixos com unidade (R$, R$/m²) e uma ou duas frases de leitura abaixo de cada gráfico. Incluir o aviso de que a base de cálculo é a base fiscal do imposto, e não o preço de mercado.
 

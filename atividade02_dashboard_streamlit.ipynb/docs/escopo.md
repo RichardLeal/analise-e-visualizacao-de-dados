@@ -30,6 +30,10 @@ São exigidas pelo menos 3 visualizações, feitas com pelo menos 2 bibliotecas.
 
 Os gráficos 1 e 2 seguem o filtro de métrica (valor total ou valor/m²). O mapa usa sempre valor/m², porque comparar valor total entre bairros confunde preço com tamanho do imóvel.
 
+### Organização dos gráficos no código
+
+Cada visualização deve ter um construtor próprio em `charts.py`, que recebe os dados já filtrados e retorna o objeto da biblioteca correspondente. `app.py` organiza a página, aplica os filtros, trata seleções sem dados e renderiza cada objeto. Consulte [`docs/padroes_graficos.md`](padroes_graficos.md) para o padrão e a lista de responsabilidades.
+
 ## Controles interativos
 São exigidos pelo menos 2:
 
