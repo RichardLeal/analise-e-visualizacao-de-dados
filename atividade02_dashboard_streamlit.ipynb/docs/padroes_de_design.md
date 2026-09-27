@@ -51,7 +51,8 @@ Para o mapa por bairro:
 - Mantenha todos os polígonos oficiais do GeoJSON, mesmo quando não houver transações no período selecionado.
 - Use a mediana do valor por m² por `bairro_oficial`; mantenha uma escala ordenada, legenda em R$/m² e tooltip com bairro e valor.
 - Mostre áreas sem dados com uma cor neutra distinta da escala. Não as confunda com valores baixos ou zero.
-- Enquadre o mapa nos limites municipais, destaque o contorno externo de Porto Alegre e não exiba mapa-base de cidades vizinhas.
+- No mapa de valor por m², enquadre a visualização nos limites municipais e destaque o contorno externo, sem mapa-base.
+- No mapa de quantidade de registros, mantenha o mapa-base original com opacidade de 50% em toda a área. Use a escala roxa do mais claro ao mais escuro `#E0AAFF` → `#C77DFF` → `#9D4EDD` → `#7B2CBF` → `#5A189A` → `#3C096C` → `#240046` → `#100028`; valores maiores devem usar tons mais escuros. Os preenchimentos roxos e brancos usam opacidade fixa de 80%; mantenha os limites pretos sólidos.
 - Categorias sem geometria, como `JAR ITU SABARA`, não podem ser desenhadas. Informe-as separadamente; não atribua seus registros a outro bairro.
 
 ## Responsabilidades no código

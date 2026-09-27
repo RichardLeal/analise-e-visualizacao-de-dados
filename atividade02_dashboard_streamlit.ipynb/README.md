@@ -22,7 +22,7 @@ Todos os comandos abaixo são executados dentro desta pasta (`atividade02_dashbo
 | `data/bairros_correspondencia.csv` | Nome no ITBI → nome oficial |
 | `data/funil.csv` | Registros restantes após cada etapa |
 | `docs/escopo.md` | Público, perguntas, gráficos e filtros do dashboard |
-| `docs/padroes_de-design.md` | Padrão de design, interação e implementação das visualizações |
+| `docs/padroes_de_design.md` | Padrão de design, interação e implementação das visualizações |
 | `tasks.md` | Tarefas do grupo e status |
 | `atividade02_dashboard_streamlit.ipynb` | Notebook da atividade (com o Registro do grupo) |
 
