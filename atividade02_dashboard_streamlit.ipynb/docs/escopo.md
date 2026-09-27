@@ -26,7 +26,8 @@ São exigidas pelo menos 3 visualizações, feitas com pelo menos 2 bibliotecas.
 | 1 | Linha: mediana por ano, da cidade e dos bairros selecionados | **Plotly** | P1 | Tooltip com o valor exato por ano; comparar bairros com a cidade |
 | 2 | Barras horizontais ordenadas: mediana por bairro | **Altair** | P2, P3 | Ranking legível com nomes longos; tooltip com o número de registros |
 | 3 | Mapa coroplético: valor/m² mediano por bairro | **Folium** | P3 | Padrão territorial, que tabela e barras não mostram |
-| 4 (opcional) | Distribuição (boxplot ou histograma) do valor/m² nos bairros selecionados | Altair ou Plotly | P3 | Mostra a dispersão, não só a mediana |
+| 4 (adicional) | Mapa de calor: total de registros por bairro | **Folium** | Contexto | Escala roxa e opacidade por contagem sobre o mapa original a 50% |
+| 5 (opcional) | Distribuição (boxplot ou histograma) do valor/m² nos bairros selecionados | Altair ou Plotly | P3 | Mostra a dispersão, não só a mediana |
 
 Os gráficos 1 e 2 seguem o filtro de métrica (valor total ou valor/m²). O mapa usa sempre valor/m², porque comparar valor total entre bairros confunde preço com tamanho do imóvel.
 

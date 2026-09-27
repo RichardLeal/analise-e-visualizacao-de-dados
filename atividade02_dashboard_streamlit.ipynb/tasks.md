@@ -72,5 +72,6 @@ Só começar depois do T01.
 
 ## Opcional
 
+- [x] Mapa adicional: total de registros por bairro em roxo, com mapa-base a 50%, bairros de menor volume até 50% de opacidade e limites pretos.
 - [ ] Publicar no Streamlit Community Cloud e colocar o link no README.
-- [ ] Gráfico 4: distribuição do valor/m² (boxplot ou histograma) nos bairros selecionados.
+- [ ] Gráfico 5: distribuição do valor/m² (boxplot ou histograma) nos bairros selecionados.

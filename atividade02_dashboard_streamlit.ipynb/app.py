@@ -10,7 +10,11 @@ import pandas as pd
 import streamlit as st
 from streamlit_folium import st_folium
 
-from charts import build_neighborhood_value_map, build_yearly_median_chart
+from charts import (
+    build_neighborhood_record_count_map,
+    build_neighborhood_value_map,
+    build_yearly_median_chart,
+)
 
 DATA_DIR = Path(__file__).parent / "data"
 
@@ -64,6 +68,18 @@ st_folium(
     width=None,
     height=650,
     key="neighborhood_value_map_city_only",
+)
+
+st.subheader(":blue[Total de registros por bairro]")
+st.caption(
+    "A cor representa a quantidade de registros no período selecionado. "
+    "Bairros sem registros aparecem em branco; o território fora de Porto Alegre aparece esmaecido."
+)
+st_folium(
+    build_neighborhood_record_count_map(df_filtered, boundaries),
+    width=None,
+    height=650,
+    key="neighborhood_record_count_map",
 )
 
 boundary_names = {
