@@ -27,6 +27,7 @@ Todos os comandos abaixo são executados dentro desta pasta (`atividade02_dashbo
 
 Requer Python 3.11 ou superior.
 
+Instale as dependências a partir da pasta do projeto (atividade02_dashboard_streamlit.ipynb):
 ```bash
 python -m venv .venv
 source .venv/bin/activate        # Windows: .venv\Scripts\activate
@@ -40,6 +41,8 @@ Os dados já preparados estão em `data/`, então não é preciso baixar nada.
 ```bash
 streamlit run app.py
 ```
+
+Para encerrar o dashboard, pressione `Ctrl+C` no terminal.
 
 ## Regenerar os dados (opcional)
 
