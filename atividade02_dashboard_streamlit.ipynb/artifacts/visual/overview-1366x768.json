@@ -1,0 +1,34 @@
+{
+  "width": 1366,
+  "scrollWidth": 1366,
+  "questions": [
+    {
+      "text": "1. Como o valor mediano dos apartamentos evoluiu entre 2020 e 2025?",
+      "width": 1300,
+      "scroll": 1300
+    },
+    {
+      "text": "2. Quais bairros têm os maiores e menores valores medianos?",
+      "width": 553,
+      "scroll": 553
+    },
+    {
+      "text": "3. Como o valor por m² varia entre bairros?",
+      "width": 711,
+      "scroll": 711
+    }
+  ],
+  "charts": [
+    {
+      "width": 1300,
+      "height": 205,
+      "svg": true
+    },
+    {
+      "width": 553,
+      "height": 289,
+      "svg": true
+    }
+  ],
+  "error_hidden": true
+}

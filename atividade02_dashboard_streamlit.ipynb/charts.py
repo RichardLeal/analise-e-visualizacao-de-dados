@@ -308,3 +308,30 @@ def build_neighborhood_scatter(stats, focus=None):
     fig.update_traces(marker_size=10, textposition="top center", hovertemplate="%{customdata[0]}<br>Valor/m²: %{customdata[1]}<br>Base: %{customdata[2]}<br>Área: %{customdata[3]}<br>Registros: %{customdata[4]}<extra></extra>")
     fig.update_layout(showlegend=False, height=360, template="plotly_white", separators=",.", margin=dict(l=10,r=10,t=20,b=10))
     return fig
+
+def build_overview_map(stats, boundaries, minimum, focus=None):
+    """Reuse official geometry/styles, with a concise tooltip and a scoped click bridge."""
+    import json
+    from branca.element import Element
+    safe_stats = stats.copy()
+    safe_stats.loc[~safe_stats.suficiente, ['valor_m2', 'base_de_calculo', 'area']] = float('nan')
+    m = build_explorer_map(safe_stats, boundaries, 'valor_m2', minimum, focus)
+    layer = next(child for child in m._children.values() if isinstance(child, folium.GeoJson))
+    for key, child in list(layer._children.items()):
+        if isinstance(child, folium.GeoJsonTooltip):
+            del layer._children[key]
+    folium.GeoJsonTooltip(
+        fields=['bairro_oficial', 'estado', 'valor_m2', 'base_de_calculo', 'registros', 'area'],
+        aliases=['Bairro', 'Cobertura', 'Valor/m² mediano (R$/m²)', 'Base de cálculo mediana', 'Registros', 'Área privativa mediana'],
+        sticky=False).add_to(layer)
+    m.get_root().script.add_child(Element(
+        f"setTimeout(() => {{ {layer.get_name()}.eachLayer(layer => layer.on('click', () => "
+        "parent.postMessage({type:'overview:focus',name:layer.feature.properties.bairro_oficial},'*')));"
+        f"new ResizeObserver(() => {{ {m.get_name()}.invalidateSize(); "
+        f"{m.get_name()}.fitBounds({json.dumps(layer.get_bounds())}, {{padding:[4,4]}}); }}).observe(document.body);"
+        f"{m.get_name()}.on('tooltipopen', event => requestAnimationFrame(() => {{"
+        "const el=event.tooltip.getElement(); el.style.marginTop='0px'; el.style.marginLeft='0px';"
+        "const r=el.getBoundingClientRect();"
+        "el.style.marginTop=Math.max(6-r.top,Math.min(0,innerHeight-6-r.bottom))+'px';"
+        "el.style.marginLeft=Math.max(6-r.left,Math.min(0,innerWidth-6-r.right))+'px'; })); }, 0);"))
+    return m

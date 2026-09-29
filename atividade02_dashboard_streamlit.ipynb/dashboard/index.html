@@ -13,10 +13,29 @@
 <body>
 <div id="dashboard">
   <header class="header">
-    <div class="brand"><img id="crest" alt="Brasão de Porto Alegre"><div><h1>MAPA IMOBILIÁRIO POA</h1><p>Explorador territorial de apartamentos e registros de ITBI</p></div></div>
-    <nav aria-label="Navegação"><button data-panel="map-panel" class="active">Mapa</button><button data-panel="line-panel">Análise de bairros</button><button data-panel="comparison-panel">Comparação</button><button id="about-button">Sobre os dados</button></nav>
+    <div class="brand"><img id="crest" alt="Brasão de Porto Alegre"><div><h1>Atlas das Transações Imobiliárias — POA</h1><p>Explorador territorial de apartamentos e registros de ITBI</p></div></div>
+    <nav aria-label="Navegação"><button data-view="overview" class="active">Visão geral</button><button data-view="analysis">Análise de bairros</button><button id="about-button">Sobre os dados</button></nav>
     <div class="total"><strong id="total">—</strong><span>registros · 2020–2025</span></div>
   </header>
+  <main id="overview-view" class="overview-view" hidden>
+    <div class="overview-summary">
+      <section class="card overview-intro"><h2>Visão geral do mercado</h2><p>Explore os principais padrões dos registros de apartamentos do ITBI de Porto Alegre: evolução dos valores, diferenças entre bairros e distribuição do valor por metro quadrado.</p></section>
+      <div id="overview-kpis"></div>
+    </div>
+    <section class="card overview-controls" aria-label="Filtros da visão geral">
+      <div id="overview-period"><strong>Período</strong><div id="overview-range"></div></div>
+      <label for="overview-minimum">Mín. de registros por bairro <input id="overview-minimum" type="number" min="1" step="1" title="Amostra mínima para barras, mapa e resumo do bairro. Não filtra os indicadores da cidade nem a série temporal."></label>
+      <label for="overview-select">Comparar bairro com Porto Alegre <select id="overview-select"></select></label>
+    </section>
+    <section class="card overview-line"><h2>1. Como o valor mediano dos apartamentos evoluiu entre 2020 e 2025?</h2><p>Evolução da base de cálculo mediana dos apartamentos em Porto Alegre e no bairro selecionado.</p><div id="overview-line" class="overview-plot"></div></section>
+    <div class="overview-bottom">
+      <section class="card overview-bars"><h2>2. Quais bairros têm os maiores e menores valores medianos?</h2><p>Bairros ordenados pela base de cálculo mediana dos apartamentos.</p><div class="overview-bar-controls"><select id="overview-order" aria-label="Ordenação da visão geral"><option value="desc">Maiores valores</option><option value="asc">Menores valores</option></select><select id="overview-count" aria-label="Quantidade de bairros"><option value="5">5 bairros</option><option value="10">10 bairros</option></select></div><div id="overview-bars" class="overview-plot"></div><p id="overview-bar-note" class="footnote"></p></section>
+      <section class="card overview-map"><h2>3. Como o valor por m² varia entre bairros?</h2><p>Valor por m² mediano dos apartamentos em Porto Alegre.</p><iframe id="overview-map" title="Valor por m² mediano nos 94 bairros oficiais" sandbox="allow-scripts allow-same-origin"></iframe><p class="footnote">Cinza: sem dados ou amostra insuficiente. Clique em um bairro para selecionar.</p></section>
+    </div>
+    <section class="card overview-focus" aria-live="polite"><div><h2 id="overview-focus-title">Selecione um bairro</h2><p id="overview-focus-note"></p></div><div><strong id="overview-focus-m2">—</strong><span>Valor por m² mediano</span></div><div><strong id="overview-focus-base">—</strong><span>Base de cálculo mediana</span></div><div><strong id="overview-focus-count">—</strong><span>Registros no período</span></div><button id="overview-analyze" disabled>Analisar este bairro →</button></section>
+    <details class="card overview-method"><summary>ⓘ &nbsp; Sobre os dados e metodologia</summary><p id="overview-note"></p><p>Medianas calculadas sobre os registros do período; valores nominais, sem correção da inflação. O mínimo determina a elegibilidade dos bairros nas barras e a interpretação do mapa. JAR ITU SABARA permanece nos cálculos sem atribuição artificial a um polígono.</p><button id="overview-about">Ver metodologia completa</button></details>
+  </main>
+  <main id="comparison-view" class="comparison-view" hidden><section class="card comparison-context"><h2>Comparação entre bairros</h2><p id="comparison-context"></p><button id="comparison-analysis">Ajustar filtros na Análise de bairros →</button></section><div id="comparison-slot"></div></main>
   <aside class="filters card">
     <h2>Recorte de interesse</h2><p class="muted">Explore os registros históricos do ITBI.</p>
     <div id="ranges"></div>
@@ -27,7 +46,7 @@
     <div class="map-metric"><h2>Métrica do mapa</h2><div id="map-metrics"></div></div>
     <p class="muted sidebar-note">Base fiscal do ITBI. Não representa oferta atual nem preço de mercado.</p>
   </aside>
-  <main class="panels">
+  <main class="panels analysis-view" id="analysis-panels">
     <section class="card map-panel" id="map-panel" tabindex="-1">
       <div class="panel-heading"><h2 id="map-title">Valor por m² mediano por bairro</h2><button class="help" data-help="map">ⓘ</button></div>
       <p id="context-note" class="muted"></p>

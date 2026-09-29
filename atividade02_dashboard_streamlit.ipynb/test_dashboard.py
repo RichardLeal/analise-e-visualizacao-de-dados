@@ -87,5 +87,76 @@ class Interface(unittest.TestCase):
         self.assertTrue(result["empty"])
         self.assertEqual(default_state(d)["years"], [2020, 2025])
 
+
+class Overview(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        from dashboard_view import default_state
+        cls.df = pd.read_parquet(ROOT / "data/apartamentos_itbi_poa.parquet")
+        cls.boundaries = json.loads((ROOT / "data/bairros_poa.geojson").read_text(encoding="utf-8"))
+        cls.defaults = default_state(cls.df)
+
+    def overview(self, **patch):
+        from dashboard_view import build_overview
+        state = {**self.defaults, **patch}
+        state['overview'] = {**self.defaults['overview'], **patch.get('overview', {})}
+        return build_overview(self.df, self.boundaries, state)
+
+    def test_initial_payload_and_city_series(self):
+        from charts import build_yearly_median_chart
+        self.assertEqual(self.defaults['view'], 'overview')
+        self.assertEqual(self.defaults['years'], [2020, 2025])
+        result = self.overview()
+        self.assertEqual(result['summary']['total'], len(self.df))
+        self.assertEqual(result['summary']['base_de_calculo'], self.df.base_de_calculo.median())
+        self.assertEqual(result['summary']['valor_m2'], self.df.valor_m2.median())
+        self.assertTrue(all(k in result for k in ['line', 'bars', 'map_html', 'focus']))
+        self.assertEqual([t['name'] for t in result['line']['data']], ['Porto Alegre'])
+        fig = build_yearly_median_chart(self.df, years=[2020, 2025])
+        self.assertEqual(list(fig.data[0].y), self.df.groupby('ano').base_de_calculo.median().tolist())
+        # Profile, neighborhood and analytical minimum cannot leak into overview.
+        restricted = self.overview(value=[1, 2], area=[1, 2], neighborhoods=['RESTINGA'], minimum=116199)
+        self.assertEqual(result['summary'], restricted['summary'])
+        self.assertEqual(result['line'], restricted['line'])
+        high_min = self.overview(overview={'minimum': 116199})
+        self.assertEqual(result['line'], high_min['line'])
+        self.assertEqual(high_min['ranking'], [])
+
+    def test_ranking_threshold_direction_and_period(self):
+        period = self.df.loc[self.df.ano.eq(2025)]
+        expected = period.groupby('bairro_oficial').base_de_calculo.agg(['median', 'size'])
+        expected = expected.loc[expected['size'] >= 300]
+        for ascending in [False, True]:
+            r = self.overview(years=[2025, 2025], overview={'minimum': 300, 'ascending': ascending, 'count': 5})
+            self.assertEqual(r['summary']['total'], len(period))
+            self.assertEqual([v['bairro'] for v in r['ranking']], expected.sort_values('median', ascending=ascending).head(5).index.tolist())
+            self.assertTrue(all(v['registros'] >= 300 for v in r['ranking']))
+
+    def test_map_geometry_and_insufficient_focus(self):
+        from charts import build_overview_map
+        stats = neighborhood_metrics(self.df, self.df, (2020, 2025), 116199)
+        m = build_overview_map(stats, self.boundaries, 116199, 'JAR ITU SABARA')
+        layer = next(c for c in m._children.values() if hasattr(c, 'data') and isinstance(c.data, dict) and 'features' in c.data)
+        features = layer.data['features']
+        self.assertEqual(len(features), 94)
+        self.assertNotIn('JAR ITU SABARA', [f['properties']['bairro_oficial'] for f in features])
+        self.assertTrue(all(f['properties']['cor'] == '#d9d9d9' for f in features))
+        self.assertTrue(all(f['properties']['valor_m2'] == '—' for f in features))
+        r = self.overview(overview={'focus': 'JAR ITU SABARA', 'minimum': 116199})
+        self.assertFalse(r['focus']['mapped'])
+        self.assertFalse(r['focus']['sufficient'])
+        self.assertEqual(r['focus']['valor_m2'], '—')
+
+    def test_view_state_and_detail_focus(self):
+        from dashboard_view import build_payload
+        for view in ['overview', 'analysis', 'comparison']:
+            state = {**self.defaults, 'view': view, 'focus': 'MENINO DEUS', 'years': [2021, 2024],
+                     'overview': {**self.defaults['overview'], 'focus': 'MENINO DEUS'}, 'comparison': ['MENINO DEUS']}
+            r = build_payload(self.df, self.boundaries, state)
+            self.assertEqual(r['state'], state)
+            self.assertEqual(r['overview']['focus']['name'], 'MENINO DEUS')
+            self.assertIn('scatter', r)
+            self.assertEqual(r['compared'], ['MENINO DEUS'])
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

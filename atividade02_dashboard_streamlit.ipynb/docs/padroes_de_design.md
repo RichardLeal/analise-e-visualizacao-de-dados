@@ -114,3 +114,22 @@ Variação usa escala divergente simétrica em torno de zero. Cinza distingue da
 ou insuficientes. Tooltip informa cobertura e quantidades. Deltas são neutros.
 Selectbox oferece seleção estável de bairro. Não há fotos ou números ilustrativos.
 metrics.py reúne cálculos compartilhados; charts.py permanece sem chamadas st.*.
+
+
+## Views do componente — 29/09/2026
+
+Estas regras substituem exemplos anteriores de renderização direta por widgets Streamlit.
+O host `app.py` envia um payload ao componente existente; HTML/CSS/JS organizam as views.
+`state.view` controla navegação real e `aria-current`. Cabeçalho e brasão são compartilhados.
+
+Visão geral: fundo claro, cards brancos, títulos azul-marinho, seleção vermelha, linha de bairro
+azul e cidade tracejada. Introdução e KPIs acima dos filtros; P1 em largura total; P2/P3 em
+44%/56%; resumo do bairro e metodologia abaixo. Títulos completos podem quebrar linha.
+CSS novo é restrito a `.overview-*` e à view de comparação. Não alterar o grid analítico existente.
+A altura dos gráficos é explícita e eles são redesenhados ao exibir a view ou redimensionar.
+Mapa recebe invalidateSize/fitBounds no resize do iframe. Views ocultas não renderizam gráficos.
+
+Mínimo insuficiente: mapa cinza, medianas indisponíveis no tooltip/resumo e mensagem nas barras
+vazias. Cidade não é filtrada pelo mínimo. Seleção vazia mostra convite à exploração e desabilita
+o botão de aprofundamento. Não usar números ilustrativos nem indicar valorização imobiliária:
+os deltas representam medianas fiscais nominais de amostras cuja composição pode mudar.

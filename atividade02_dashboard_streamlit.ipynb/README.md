@@ -1,19 +1,46 @@
-# Mapa Imobiliário POA — registros de ITBI (2020–2025)
+# Atlas das Transações Imobiliárias — POA
 
-## Dashboard desktop em uma tela
+Estudo dos registros de ITBI de Porto Alegre (2020–2025).
 
-A interface usa um mapa vertical à esquerda, ocupando as duas primeiras linhas.
-À direita, os indicadores ficam acima dos gráficos altos de evolução e dispersão.
-Barras e comparação ocupam a base. As linhas usam 22%, 48% e 30% da altura útil;
-cabeçalho e margens são descontados de `100dvh`. Não usa escala da interface nem
-overflow oculto para cortar conteúdo. Em 1366×768, os dois gráficos principais têm
-328 px de altura de painel, contra 171 px na composição horizontal anterior.
+## Navegação e arquitetura de informação
 
-O ranking mostra de 5 a 8 bairros conforme a altura, informando o limite; alterne
-Maiores/Menores para investigar os extremos. Comparação aceita quatro bairros. Seletores
-múltiplos e metodologia abrem em diálogos, sem expandir a página principal. A navegação
-destaca os painéis que já estão visíveis. O brasão real ocupa o lugar da foto da referência:
-não há fotografias de bairros no projeto.
+A aplicação abre em **Visão geral**, seguindo a referência visual aprovada: introdução,
+três indicadores da cidade, filtros simples, linha em largura total, barras e mapa lado
+a lado, resumo do bairro e metodologia. A página permite rolagem vertical.
+
+- **P1 — Como o valor mediano dos apartamentos evoluiu entre 2020 e 2025?** Linha Plotly
+  da mediana de `base_de_calculo` por ano, com Porto Alegre e, opcionalmente, um bairro.
+  O tooltip informa ano, região, mediana e registros. O mínimo não remove a série da cidade.
+- **P2 — Quais bairros têm os maiores e menores valores medianos?** Barras horizontais
+  Plotly: primeiro exigem a amostra mínima, depois ordenam a mediana de `base_de_calculo`.
+  Controles locais alternam maiores/menores e 5/10 bairros, sem ordenar por volume.
+- **P3 — Como o valor por m² varia entre bairros?** Mapa Folium com mediana de `valor_m2`,
+  paleta YlOrRd e os 94 polígonos oficiais. Amostras insuficientes ficam cinza. JAR ITU
+  SABARA permanece nos cálculos tabulares, sem geometria artificial.
+
+**Análise de bairros** preserva o dashboard de uma tela: filtros detalhados, compatibilidade
+histórica, cinco métricas de mapa, indicadores, evolução, dispersão, barras Altair e comparação.
+Seu grid continua com linhas de 22%, 48% e 30%. A tabela de comparação de até quatro bairros
+permanece dentro da Análise de bairros; não há aba de comparação na navegação. **Sobre os dados**
+abre o mesmo diálogo em qualquer página.
+
+### Estado e integração
+
+`state.view` persiste `overview`, `analysis` ou `comparison`. O período `years` é compartilhado.
+`state.overview` guarda mínimo (inicial 100), foco (inicial nenhum), ordenação e quantidade
+(inicial 10). Os filtros de valor, área, construção, bairros e métrica são exclusivos da análise;
+nunca restringem silenciosamente o panorama. Trocar de view preserva esses filtros.
+
+Barras, mapa e seletor atualizam o foco da Visão geral. **Analisar este bairro →** abre a análise
+com esse bairro e período, reiniciando os filtros avançados para que o bairro não fique oculto.
+A seleção do mapa usa uma mensagem do iframe Folium validada pela janela de origem e pelo nome
+existente na base. O seletor oferece a alternativa de acesso por teclado.
+
+`app.py` continua um host fino. `dashboard_view.py` monta o payload analítico e o bloco
+`overview`; HTML/CSS/JS compõem as views e as interações. Não há cálculo de medianas no JavaScript.
+Nenhum valor do mockup é usado como dado. Base de cálculo é a base fiscal do ITBI, não
+necessariamente preço de mercado; valor/m² deriva dessa base. Os deltas dos KPIs comparam
+as medianas anuais dos extremos do período, enquanto o valor principal é a mediana do período.
 
 ### Arquivos do layout
 
@@ -26,20 +53,21 @@ não há fotografias de bairros no projeto.
 
 ### Reproduzir a verificação visual
 
-Com Google Chrome instalado e o servidor ativo em `localhost:8501`:
+Com Google Chrome instalado e o servidor ativo em `localhost:8501`, use o Python do
+ambiente virtual criado na seção **Instalação** (no Windows, o caminho completo indicado lá):
 
 ```bash
-python -m pip install playwright
+python -m pip install playwright==1.63.0
 python visual_check.py
 ```
 
 Playwright é uma dependência de desenvolvimento. O teste usa perfil temporário e escala
-de dispositivo 1. Confere 1366×768, 1536×864 e 1920×1080; dimensões da página/cartões;
+de dispositivo 1. Confere as duas páginas em 1366×768, 1536×864 e 1920×1080; permite scroll vertical na Visão geral e exige viewport único na análise;
 tooltip do mapa; filtros; quatro bairros; ausentes; bairro sem geometria e mínimo alto.
 Abaixo de 1050 px de largura, permite rolagem para preservar a leitura; esse modo fica
 fora do requisito desktop. Folium/Leaflet e os tiles OpenStreetMap usam recursos de rede.
 
-Capturas: [1366×768](artifacts/visual/dashboard-1366x768.png),
+Capturas da análise: [1366×768](artifacts/visual/dashboard-1366x768.png),
 [1536×864](artifacts/visual/dashboard-1536x864.png),
 [1920×1080](artifacts/visual/dashboard-1920x1080.png).
 
@@ -71,26 +99,99 @@ Todos os comandos abaixo são executados dentro desta pasta (`atividade02_dashbo
 
 ## Instalação
 
-Requer Python 3.11 ou superior.
+Requer **Python 3.11 ou superior** (validado com Python 3.13 no Windows) e acesso à internet
+para instalar os pacotes. Baixe ou clone o projeto e abra um terminal na pasta que contém
+`app.py` e `requirements.txt`: `atividade02_dashboard_streamlit.ipynb/`.
+Apesar do nome, essa pasta é um diretório; o notebook está dentro dela.
 
-Instale as dependências a partir da pasta do projeto (atividade02_dashboard_streamlit.ipynb):
-```bash
-python -m venv .venv
-source .venv/bin/activate        # Windows: .venv\Scripts\activate
-pip install -r requirements.txt
+### Windows — PowerShell
+
+Use um caminho curto para o ambiente virtual, evitando o limite de caminhos do Windows.
+Não é necessário ativar o ambiente nem alterar a política de execução do PowerShell.
+
+```powershell
+# Execute dentro da pasta que contém app.py.
+python -m venv "$env:LOCALAPPDATA\venvs\atlas-poa"
+& "$env:LOCALAPPDATA\venvs\atlas-poa\Scripts\python.exe" -m pip install --upgrade pip
+& "$env:LOCALAPPDATA\venvs\atlas-poa\Scripts\python.exe" -m pip install -r requirements.txt
 ```
+
+### Linux / macOS
+
+```bash
+# Execute dentro da pasta que contém app.py.
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
+```
+
+O `requirements.txt` inclui as dependências da aplicação e dos scripts de preparação e
+verificação dos dados. Playwright é opcional e só é necessário para os testes visuais.
+Não é necessário instalar Node.js nem npm; Plotly e Vega do componente estão em `dashboard/vendor/`.
 
 ## Executar o dashboard
 
-Os dados já preparados estão em `data/`, então não é preciso baixar nada.
+Os arquivos preparados `data/apartamentos_itbi_poa.parquet` e `data/bairros_poa.geojson`
+já acompanham o projeto. Preserve também as pastas `dashboard/` e `assets/`.
+Não é necessário regenerar os dados para abrir a aplicação.
 
-```bash
-streamlit run app.py
+**Windows — PowerShell:**
+
+```powershell
+& "$env:LOCALAPPDATA\venvs\atlas-poa\Scripts\python.exe" -m streamlit run app.py
 ```
 
-Para encerrar o dashboard, pressione `Ctrl+C` no terminal.
+**Linux / macOS**, com o ambiente ativado:
+
+```bash
+python -m streamlit run app.py
+```
+
+Abra **http://localhost:8501** no navegador, ou o endereço informado no terminal.
+A aplicação inicia em Visão geral; use Análise de bairros para explorar os filtros detalhados.
+O mapa-base OpenStreetMap e os recursos externos do Folium precisam de internet.
+Para encerrar, pressione `Ctrl+C` no terminal. Se a porta estiver ocupada, acrescente
+`--server.port 8502` ao comando e abra **http://localhost:8502**.
+
+### Verificar a instalação e os cálculos
+
+No Windows:
+
+```powershell
+& "$env:LOCALAPPDATA\venvs\atlas-poa\Scripts\python.exe" -m pip check
+& "$env:LOCALAPPDATA\venvs\atlas-poa\Scripts\python.exe" test_dashboard.py
+& "$env:LOCALAPPDATA\venvs\atlas-poa\Scripts\python.exe" check_data.py
+```
+
+No Linux/macOS, com o ambiente ativado:
+
+```bash
+python -m pip check
+python test_dashboard.py
+python check_data.py
+```
+
+`test_dashboard.py` usa os dados locais. `check_data.py` consulta a API municipal se o cache
+`data/raw/` não estiver disponível, por isso pode precisar de internet.
+
+### Testes visuais opcionais
+
+Requer Google Chrome instalado e a aplicação aberta em outro terminal. No Windows:
+
+```powershell
+& "$env:LOCALAPPDATA\venvs\atlas-poa\Scripts\python.exe" -m pip install playwright==1.63.0
+& "$env:LOCALAPPDATA\venvs\atlas-poa\Scripts\python.exe" visual_check.py
+```
+
+No Linux/macOS, use `python -m pip install playwright==1.63.0` e `python visual_check.py`
+no ambiente ativado. O teste usa o Chrome instalado, sem exigir download de outro navegador.
+Para outra porta no PowerShell, defina `$env:DASHBOARD_URL='http://localhost:8502'`.
 
 ## Regenerar os dados (opcional)
+
+Os comandos abaixo usam o Python do ambiente virtual. No Windows, substitua `python` por
+`& "$env:LOCALAPPDATA\venvs\atlas-poa\Scripts\python.exe"`. No Linux/macOS, mantenha o ambiente ativado.
 
 ```bash
 python prepare_data.py            # baixa da API (~20 s) e guarda cache em data/raw/
@@ -187,10 +288,133 @@ Na pasta do aplicativo:
 
 check_data.py consulta a API quando data/raw não está disponível.
 
-### Windows: caminhos longos
+## Capturas e comandos da Visão geral
 
-Se ocorrer WinError 206, use um ambiente com caminho curto (PowerShell):
+Capturas completas do conteúdo: [1366×768](artifacts/visual/overview-content-1366x768.png),
+[1536×864](artifacts/visual/overview-content-1536x864.png),
+[1920×1080](artifacts/visual/overview-content-1920x1080.png).
+As imagens `overview-selected-*` mostram um bairro selecionado. `overview-*` mostra o viewport
+com cabeçalho. As medidas ficam em JSON na mesma pasta.
 
-    python -m venv "$env:TEMP/itbi-venv"
-    & "$env:TEMP/itbi-venv/Scripts/python.exe" -m pip install -r requirements.txt
-    & "$env:TEMP/itbi-venv/Scripts/python.exe" -m streamlit run app.py
+Os comandos para instalar, executar e testar estão nas seções **Instalação** e
+**Executar o dashboard** acima.
+
+---
+
+## IA001 — Análise e Visualização de Dados com Python e Ferramentas Assistidas por IA
+
+## Atividade 01 — Proposta de análise visual de dados
+
+**Objetivo:** escolher um conjunto de dados, realizar uma exploração inicial e propor perguntas que possam orientar uma ferramenta de visualização.
+
+**Produto da atividade:** este notebook preenchido, com respostas, código executado, estatísticas, gráficos e referências.
+
+## IA001 — Análise e Visualização de Dados com Python e Ferramentas Assistidas por IA
+
+## Atividade 02 — Dashboard interativo com Streamlit
+
+**Objetivo:** dar continuidade à Atividade 01, transformando a proposta de análise visual em um dashboard que permita explorar os dados e investigar as perguntas do grupo.
+
+Trabalhem no mesmo grupo (até 3 integrantes) e utilizem o conjunto de dados da atividade anterior. Se precisarem alterar os dados ou as perguntas, justifiquem brevemente.
+
+### O que desenvolver
+
+Criem uma aplicação em **Streamlit** voltada ao público identificado na Atividade 01. O dashboard deve:
+
+- Investigar **pelo menos duas perguntas** propostas na atividade anterior.
+- Conter **pelo menos três visualizações**, utilizando **ao menos duas** das bibliotecas estudadas: Altair, Plotly, Seaborn, Matplotlib ou Folium. Escolham as bibliotecas de acordo com os dados e as perguntas; mapas são opcionais quando houver informação geográfica. Streamlit é a estrutura da aplicação e não conta como uma das duas bibliotecas de visualização.
+- Oferecer **pelo menos dois controles interativos**, como seleção de categorias, período ou região, que atualizem as visualizações pertinentes. Informem quando uma seleção não produzir dados.
+- Apresentar títulos, rótulos, unidades, fonte dos dados e textos curtos que ajudem o usuário a interpretar os resultados.
+
+Vocês podem adaptar os exemplos dos notebooks da aula. Confiram se os filtros e os cálculos produzem resultados coerentes com os dados.
+
+### Entrega
+
+Entreguem uma pasta ou arquivo ZIP com:
+
+1. A aplicação (`app.py` e eventuais arquivos auxiliares).
+2. Um `requirements.txt` e instruções de instalação e execução em um `README.md`.
+3. Os dados necessários, quando o compartilhamento for permitido, ou instruções reproduzíveis para obtê-los.
+4. Este notebook preenchido com o registro breve abaixo.
+
+A aplicação deve executar localmente. A publicação na internet é opcional. Antes de entregar, testem a execução seguindo o próprio README e experimentem diferentes combinações dos filtros.
+
+**Critérios de qualidade:** continuidade com a proposta, adequação dos gráficos às perguntas, funcionamento das interações, clareza da interface e possibilidade de reproduzir a execução.
+
+### Registro do grupo
+
+**Grupo e integrantes:**
+
+| Integrante |
+| --- |
+| Giulia Giozza |
+| Richard Ramos |
+| Eduardo Mello |
+
+**Perguntas da Atividade 01 contempladas pelo dashboard:**
+
+1. Como o valor mediano dos apartamentos evoluiu entre 2020 e 2025?
+2. Quais bairros têm os maiores e menores valores medianos?
+3. Como o valor por m² varia entre bairros?
+
+As três perguntas aparecem explicitamente na Visão geral. A Análise de bairros permite
+aprofundá-las por período e perfil dos registros. Os valores analisados são a base fiscal
+do ITBI e o valor por m² derivado dessa base.
+
+**Visualizações e bibliotecas utilizadas — justifiquem brevemente as escolhas:**
+
+| Visualização | Biblioteca | Justificativa |
+| --- | --- | --- |
+| Linhas de evolução anual das medianas | Plotly | Permitem acompanhar a evolução temporal e comparar o bairro selecionado com Porto Alegre, com valores e contagens nos tooltips. |
+| Barras horizontais de maiores e menores medianas na Visão geral | Plotly | Facilitam a leitura dos nomes e a comparação entre bairros, com ordenação e seleção por clique. |
+| Barras de medianas na Análise de bairros | Altair | Permitem comparar as medianas por bairro no recorte escolhido, alternando métrica e ordenação. |
+| Mapa coroplético dos bairros | Folium | Mostra a distribuição territorial do valor por m², preservando os limites oficiais e indicando amostras insuficientes em cinza. |
+| Dispersão do valor por m² versus número de registros | Plotly | Permite observar o posicionamento dos bairros e destacar o bairro em foco. |
+
+Streamlit hospeda a aplicação; HTML, CSS e JavaScript organizam as páginas e suas interações.
+Os cálculos das métricas permanecem no Python.
+
+**Como o público escolhido pode usar os filtros para investigar uma pergunta?**
+
+Uma pessoa interessada em compreender as diferenças históricas de valor entre bairros pode
+selecionar o período de 2020 a 2025 na Visão geral, manter o mínimo de 100 registros e escolher
+Petrópolis para comparar sua evolução com a cidade. Em seguida, pode alternar entre maiores e
+menores medianas nas barras e observar a distribuição do valor por m² no mapa. Ao clicar em
+**Analisar este bairro**, pode restringir a área privativa, por exemplo, a 50–80 m², e observar
+como as medianas e o número de registros mudam nesse perfil. O exemplo investiga registros
+históricos do ITBI; não corresponde a uma busca de imóveis anunciados.
+
+**Um resultado observado e uma limitação da análise:** Não se aplica.
+
+**Mudanças em relação à proposta inicial, se houver:** Não se aplica.
+
+**Uso de IA e referências:**
+
+Utilizamos ChatGPT para apoiar a concepção visual do dashboard e gerar referências de layout.
+Também utilizamos assistência de IA (Codex) na construção do dashboard e de suas páginas,
+na organização dos componentes e na implementação das interações. As duas imagens abaixo
+registram a ideia visual: uma para a Visão geral e outra para a Análise de bairros.
+Serviram como referências para distribuir indicadores, filtros, gráficos e mapa.
+Os valores ilustrativos dessas imagens não foram utilizados como resultados da análise;
+as métricas exibidas pela aplicação são calculadas a partir dos dados do ITBI.
+
+A verificação incluiu `check_data.py`, que confere o funil e os valores de referência;
+`test_dashboard.py`, com testes de cálculos, filtros, estado e geometria; e `visual_check.py`,
+com testes de navegação e interação nas resoluções 1366×768, 1536×864 e 1920×1080.
+As capturas da implementação estão em `artifacts/visual/`.
+
+**Referências visuais geradas com apoio de IA:**
+
+- Visão geral — imagem do ChatGPT de 29/09/2026.
+
+![Referência conceitual da Visão geral, gerada com apoio do ChatGPT](docs/referencias/ideia-visao-geral.png)
+
+- Análise de bairros — imagem do ChatGPT de 28/09/2026.
+
+![Referência conceitual da Análise de bairros, gerada com apoio do ChatGPT](docs/referencias/ideia-analise-bairros.png)
+
+**Fontes dos dados e da geometria utilizadas no projeto:**
+
+- [Registros de ITBI — Portal de Dados Abertos de Porto Alegre](https://dadosabertos.poa.br/dataset/itbi), período de 2020 a 2025.
+- [Limites oficiais dos bairros — SMURB/PMPA, LC 12.112/2016](https://dadosabertos.poa.br/dataset/a7172700-e0e2-4797-bf4a-12f658828568).
+- Notebook da Atividade 01 e scripts `pipeline.py`, `geo.py` e `check_data.py`, que registram a preparação e as verificações reproduzíveis.

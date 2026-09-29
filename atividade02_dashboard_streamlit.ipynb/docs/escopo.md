@@ -85,3 +85,16 @@ construção) como numerador. O mínimo se aplica ao denominador para compatibil
 à amostra filtrada para medianas/contagem e a ambos os extremos para variação.
 A referência da cidade aplica período e perfil, abrangendo todos os bairros.
 O período corresponde ao ano da base. Valores nominais e composição são explicitados.
+
+
+## Arquitetura de informação vigente — 29/09/2026
+
+A página inicial é Visão geral, com perguntas completas: P1 na linha Plotly da mediana fiscal
+por ano, P2 nas barras Plotly de maiores/menores medianas fiscais por bairro e P3 no mapa
+Folium de valor/m² (prioritário). Há três KPIs, período global, mínimo próprio e bairro opcional.
+A elegibilidade de P2/P3 exige o mínimo, mas P1 e KPIs da cidade usam todo o período.
+Análise de bairros complementa essas respostas com exploração detalhada, preservando filtros,
+compatibilidade, scatter, métricas e comparação. Comparação tem view dedicada; metodologia é modal.
+A Visão geral permite scroll vertical; a análise mantém viewport único nas três resoluções desktop.
+O botão Analisar este bairro transfere foco e período e abre os filtros avançados. A navegação
+normal preserva estado. Todos os cálculos permanecem no Python e o host Streamlit permanece fino.

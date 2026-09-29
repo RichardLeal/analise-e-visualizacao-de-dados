@@ -7,6 +7,7 @@ function send(type, extra={}) { window.parent.postMessage({isStreamlitMessage:tr
 function fitFrame(){
   let height;
   try { height = window.parent.innerHeight - 2; } catch { height = window.innerHeight; }
+  if(state?.view==='overview')height=Math.max(height,Math.ceil($('overview-view').scrollHeight+document.querySelector('.header').offsetHeight+24));
   send('streamlit:setFrameHeight', {height});
 }
 function update(patch){
@@ -64,7 +65,7 @@ const help={
 function showHelp(key){$('info-title').textContent=help[key][0];$('info-content').textContent=help[key][1];$('info').showModal();}
 function showAbout(){
   $('info-title').textContent='Sobre os dados e a metodologia';
-  $('info-content').innerHTML=`<p><strong>Fonte:</strong> <a href="https://dadosabertos.poa.br/dataset/itbi" target="_blank" rel="noopener">ITBI da Prefeitura de Porto Alegre</a>, 2020–2025. Licença CC-BY conforme documentação do projeto. Limites oficiais SMURB/PMPA, LC 12.112/2016.</p><p><strong>Preparação preservada:</strong> remoção de duplicatas, reconstrução de guias, apartamentos de unidade única, base e área positivas, exclusão de bairro vazio e zona indefinida, corte P1–P99 de valor/m².</p><p><strong>Mediana:</strong> valor central da distribuição. Valor/m² = base fiscal do ITBI ÷ área privativa. A base de cálculo não equivale necessariamente ao preço de mercado.</p><p><strong>Filtros:</strong> contexto = período e bairros; perfil = valor, área e construção. Compatibilidade divide os compatíveis pelo contexto anterior aos filtros de perfil. O mínimo se aplica ao denominador nesse modo, à amostra filtrada nas medianas e aos dois extremos na variação.</p><p><strong>Limitações:</strong> valores nominais, mudanças de composição, transmissões parciais mantidas, anos de construção ausentes e corte dos extremos. JAR ITU SABARA permanece nas tabelas e séries sem atribuição artificial a um polígono. O ano é o ano da base.</p><p><strong>Referência da cidade:</strong> mesmos filtros de período e perfil, abrangendo todos os bairros. Contagens são de registros, não de imóveis únicos, oferta atual ou liquidez.</p><p><strong>Imagem:</strong> o brasão municipal é o recurso real disponível. Não há fotografias de bairros no projeto.</p>`;
+  $('info-content').innerHTML=`<p><strong>Fonte:</strong> <a href="https://dadosabertos.poa.br/dataset/itbi" target="_blank" rel="noopener">ITBI da Prefeitura de Porto Alegre</a>, 2020–2025. Licença CC-BY conforme documentação do projeto. Limites oficiais SMURB/PMPA, LC 12.112/2016.</p><p><strong>Preparação preservada:</strong> remoção de duplicatas, reconstrução de guias, apartamentos de unidade única, base e área positivas, exclusão de bairro vazio e zona indefinida, corte P1–P99 de valor/m².</p><p><strong>Mediana:</strong> valor central da distribuição. Valor/m² = base fiscal do ITBI ÷ área privativa. A base de cálculo não equivale necessariamente ao preço de mercado.</p><p><strong>Visão geral:</strong> considera apenas o período. O mínimo afeta as barras, o mapa e o resumo do bairro; n?o afeta os indicadores da cidade nem a série temporal. Selecionar um bairro adiciona sua linha. Analisar este bairro inicia a an?lise detalhada com o período e bairro escolhidos e filtros avan?ados abertos.</p><p><strong>Filtros da an?lise:</strong> contexto = período e bairros; perfil = valor, área e construção. Compatibilidade divide os compatíveis pelo contexto anterior aos filtros de perfil. O mínimo se aplica ao denominador nesse modo, à amostra filtrada nas medianas e aos dois extremos na variação.</p><p><strong>Limitações:</strong> valores nominais, mudanças de composição, transmissões parciais mantidas, anos de construção ausentes e corte dos extremos. JAR ITU SABARA permanece nas tabelas e séries sem atribuição artificial a um polígono. O ano é o ano da base.</p><p><strong>Referência da cidade:</strong> mesmos filtros de período e perfil, abrangendo todos os bairros. Contagens são de registros, não de imóveis únicos, oferta atual ou liquidez.</p><p><strong>Imagem:</strong> o brasão municipal é o recurso real disponível. Não há fotografias de bairros no projeto.</p>`;
   $('info').showModal();
 }
 function renderControls(){
@@ -96,6 +97,8 @@ function renderTable(){
 }
 async function renderCharts(){
   if(!payload || !window.Plotly || !window.vegaEmbed) return;
+  if(state.view==='overview') return renderOverviewCharts();
+  if(state.view==='comparison') return;
   const version=++renderVersion;
   for(const key of ['line','scatter']){
     const container=$(key), rect=container.getBoundingClientRect(), fig=payload[key];
@@ -130,7 +133,7 @@ async function render(args){
   $('context-note').textContent=payload.note;
   $('map-title').textContent=shortMetrics[state.metric]+' por bairro';
   $('map-note').textContent=payload.metric_note;
-  $('map').srcdoc=payload.map_html;
+  if(state.view==='analysis')$('map').srcdoc=payload.map_html;
   $('empty').hidden=!payload.empty;
   renderControls();renderTable();
   $('kpis').replaceChildren(...payload.kpis.map(k=>{
@@ -139,6 +142,7 @@ async function render(args){
   }));
   $('focus-note').textContent=payload.focus_sufficient?'Mesmo período e perfil da cidade · contorno azul no mapa.':`Amostra insuficiente para medianas (mínimo ${state.minimum}).`;
   if(state.focus==='JAR ITU SABARA')$('focus-note').textContent+=' Sem polígono oficial.';
+  renderView();renderOverview();
   fitFrame();requestAnimationFrame(()=>renderCharts().catch(showError));
 }
 function showError(error){$('error').textContent='Não foi possível renderizar o painel: '+error.message;$('error').hidden=false;console.error(error);}
@@ -152,12 +156,94 @@ $('focus').onchange=e=>update({focus:e.target.value});
 $('line-metric').onchange=e=>update({line_metric:e.target.value});
 $('bar-metric').onchange=e=>update({bar_metric:e.target.value});
 $('order').onchange=e=>update({ascending:e.target.value==='asc'});
-$('reset').onclick=()=>update(payload.defaults);
+$('reset').onclick=()=>update({...payload.defaults,view:state.view,overview:state.overview});
 $('neighborhoods').onclick=()=>openPicker('neighborhoods');$('comparison').onclick=()=>openPicker('comparison');
 $('picker-search').oninput=drawPicker;
 $('picker-close').onclick=()=>$('picker').close();$('picker-clear').onclick=()=>{pickerValues=[];drawPicker();};
 $('picker-apply').onclick=()=>{$('picker').close();update({[pickerKey]:pickerValues});};
 $('info-close').onclick=()=>$('info').close();$('about-button').onclick=showAbout;
 document.querySelectorAll('[data-help]').forEach(b=>b.onclick=()=>showHelp(b.dataset.help));
-document.querySelectorAll('[data-panel]').forEach(b=>b.onclick=()=>{document.querySelectorAll('nav button').forEach(x=>x.classList.remove('active'));b.classList.add('active');const panel=$(b.dataset.panel);panel.focus({preventScroll:true});panel.classList.add('flash');setTimeout(()=>panel.classList.remove('flash'),1200);});
+document.querySelectorAll('[data-view]').forEach(button=>button.onclick=()=>update({view:button.dataset.view}));
+function updateOverview(patch){update({overview:{...state.overview,...patch}});}
+function renderView(){
+  const overview=state.view==='overview', analysis=state.view==='analysis';
+  $('dashboard').dataset.view=state.view;
+  $('overview-view').hidden=!overview;
+  $('comparison-view').hidden=state.view!=='comparison';
+  document.querySelector('.filters').hidden=!analysis;
+  $('analysis-panels').hidden=!analysis;
+  document.querySelectorAll('[data-view]').forEach(button=>{
+    const active=button.dataset.view===state.view;
+    button.classList.toggle('active',active);
+    if(active)button.setAttribute('aria-current','page');else button.removeAttribute('aria-current');
+  });
+  // Move the existing comparison panel; preserve its IDs, state and event handlers.
+  (state.view==='comparison'?$('comparison-slot'):$('analysis-panels')).append($('comparison-panel'));
+  $('comparison-context').textContent=`${payload.note}. Comparação com os filtros da Análise de bairros.`;
+}
+function renderOverview(){
+  const data=payload.overview;
+  $('overview-kpis').replaceChildren(...data.kpis.map((k,i)=>{
+    const card=document.createElement('section');card.className='card overview-kpi';
+    const icon=document.createElement('span');icon.className='overview-icon';icon.setAttribute('aria-hidden','true');icon.textContent=['▤','◎','↗'][i];
+    const content=document.createElement('div');
+    for(const [tag,text] of [['h3',k.label],['strong',k.value],['p',k.note]]){const el=document.createElement(tag);el.textContent=text;content.append(el);}
+    card.append(icon,content);return card;
+  }));
+  // Reuse the range control, with the same period in both views.
+  addRange('years','Período da visão geral','ano',1);
+  $('overview-range').replaceChildren($('ranges').lastElementChild);
+  $('overview-minimum').value=state.overview.minimum;
+  selectOptions($('overview-select'),['',...payload.names],state.overview.focus,n=>n||'Nenhum');
+  $('overview-order').value=state.overview.ascending?'asc':'desc';
+  $('overview-count').value=state.overview.count;
+  if(state.view==='overview')$('overview-map').srcdoc=data.map_html;
+  $('overview-bar-note').textContent=`${data.ranking.length} de ${data.eligible_count} bairros com ≥ ${state.overview.minimum} registros · clique numa barra para selecionar`;
+  const f=data.focus;
+  $('overview-focus-title').textContent=f.name?`Bairro selecionado: ${f.name}`:'Selecione um bairro';
+  $('overview-focus-note').textContent=f.name?
+    `${state.years[0]}–${state.years[1]}${f.sufficient?'':' · Amostra insuficiente para medianas'}${f.mapped?'':' · Sem polígono oficial'}`:
+    'Use o mapa, as barras ou o seletor para explorar um bairro.';
+  $('overview-focus-m2').textContent=f.valor_m2;
+  $('overview-focus-base').textContent=f.base_de_calculo;
+  $('overview-focus-count').textContent=f.name?f.registros:'—';
+  $('overview-analyze').disabled=!f.name;
+  $('overview-note').textContent=data.note;
+}
+async function renderOverviewCharts(){
+  for(const key of ['line','bars']){
+    const el=$('overview-'+key),rect=el.getBoundingClientRect(),fig=payload.overview[key];
+    if(!rect.width || !rect.height)return;
+    const layout={...fig.layout,width:Math.floor(rect.width),height:Math.floor(rect.height),autosize:false};
+    if(key==='line'){
+      layout.showlegend=true;
+      layout.yaxis={...layout.yaxis,tickformat:',.0f'};
+    }else{
+      layout.xaxis={...layout.xaxis,tickformat:',.0f',nticks:4};
+    }
+    await Plotly.react(el,fig.data,layout,
+      {responsive:false,displayModeBar:false,locale:'pt-BR'});
+    if(key==='bars'){
+      el.removeAllListeners('plotly_click');
+      el.on('plotly_click',event=>{const name=event.points[0]?.y;if(payload.names.includes(name))updateOverview({focus:name});});
+    }
+  }
+}
+$('overview-minimum').onchange=e=>updateOverview({minimum:Math.max(1,Number(e.target.value)||1)});
+$('overview-select').onchange=e=>updateOverview({focus:e.target.value||null});
+$('overview-order').onchange=e=>updateOverview({ascending:e.target.value==='asc'});
+$('overview-count').onchange=e=>updateOverview({count:Number(e.target.value)});
+$('overview-analyze').onclick=()=>{
+  if(!state.overview.focus)return;
+  // Start the detailed exploration with this period and neighborhood, without hidden profile restrictions.
+  update({...payload.defaults,years:state.years,overview:state.overview,focus:state.overview.focus,view:'analysis'});
+};
+$('comparison-analysis').onclick=()=>update({view:'analysis'});
+$('overview-about').onclick=showAbout;
+window.addEventListener('message',event=>{
+  if(event.source!==$('overview-map').contentWindow || event.data?.type!=='overview:focus')return;
+  if(state.view==='overview' && payload.names.includes(event.data.name))updateOverview({focus:event.data.name});
+});
+new ResizeObserver(()=>{fitFrame();clearTimeout(resizeTimer);resizeTimer=setTimeout(()=>renderCharts().catch(showError),150);}).observe($('overview-view'));
+
 send('streamlit:componentReady',{apiVersion:1});fitFrame();

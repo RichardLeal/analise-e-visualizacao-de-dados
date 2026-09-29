@@ -6,7 +6,8 @@ from metrics import METRICS, filter_profile, neighborhood_metrics, format_curren
 
 
 def default_state(df):
-    return dict(years=[int(df.ano.min()), int(df.ano.max())],
+    return dict(view="overview", overview=dict(minimum=100, focus=None, ascending=False, count=10),
+                years=[int(df.ano.min()), int(df.ano.max())],
                 value=[float(df.base_de_calculo.min()), float(df.base_de_calculo.max())],
                 area=[float(df.area_constr_privativa.min()), float(df.area_constr_privativa.max())],
                 construction=[int(df.ano_construcao.min()), int(df.ano_construcao.max())],
@@ -18,6 +19,8 @@ def default_state(df):
 def build_payload(df, boundaries, state):
     defaults = default_state(df)
     state = {**defaults, **state}
+    state["view"] = state["view"] if state["view"] in ("overview", "analysis", "comparison") else "overview"
+    state["overview"] = {**defaults["overview"], **state.get("overview", {})}
     names = sorted(df.bairro_oficial.unique())
     for key in ("neighborhoods", "comparison"):
         state[key] = [n for n in state[key] if n in names]
@@ -97,10 +100,79 @@ def build_payload(df, boundaries, state):
         metric_note = "Selecione pelo menos dois anos." if years[0] == years[1] else f"Variação nominal {years[0]}–{years[1]}; mínimo {minimum} em cada extremo."
     if unmapped:
         metric_note += f" {unmapped} registros sem polígono permanecem nas tabelas."
-    return dict(state=state, defaults=defaults, names=names, options=options, metrics=METRICS,
+    overview = build_overview(df, boundaries, state)
+    return dict(state=state, defaults=defaults, names=names, options=options, metrics=METRICS, overview=overview,
                 total=format_integer_br(len(df)), note=note, metric_note=metric_note,
                 empty=filtered.empty, kpis=kpis, focus_count=count,
                 focus_sufficient=bool(row is not None and row.suficiente),
                 missing_construction=format_integer_br(df.ano_construcao.isna().sum()),
                 map_html=map_html, line=json.loads(line.to_json()), scatter=json.loads(scatter.to_json()),
                 bars=bars, eligible_count=len(eligible), compared=compared, table=rows)
+
+def build_overview(df, boundaries, state):
+    """City panorama: only period and overview sample threshold apply."""
+    from charts import build_overview_map
+    import plotly.graph_objects as go
+    settings = state['overview']
+    years = state['years']
+    minimum = max(1, int(settings['minimum']))
+    settings['minimum'] = minimum
+    settings['count'] = 5 if settings['count'] == 5 else 10
+    period = df.loc[df.ano.between(*years)]
+    stats = neighborhood_metrics(period, period, years, minimum)
+    focus = settings['focus'] if settings['focus'] in stats.index else None
+    settings['focus'] = focus
+    eligible = stats.loc[stats.suficiente].sort_values('base_de_calculo', ascending=settings['ascending'], kind='stable')
+    ranked = eligible.head(settings['count'])
+    # The minimum controls P2/P3, never the city reference in P1.
+    line = build_yearly_median_chart(period, 'base_de_calculo', [focus] if focus else [], period, years, 1)
+    if focus:
+        line.data[1].line.color = '#3276cc'
+    bars = go.Figure(go.Bar(
+        x=ranked.base_de_calculo.tolist(), y=ranked.index.tolist(), orientation='h',
+        marker_color=['#bc1636' if name == focus else '#477fc4' for name in ranked.index],
+        text=[format_currency_br(v) for v in ranked.base_de_calculo], textposition='outside', cliponaxis=False,
+        customdata=[[name, format_integer_br(row.registros)] for name, row in ranked.iterrows()],
+        hovertemplate='%{y}<br>Base de cálculo: %{text}<br>Registros: %{customdata[1]}<extra></extra>'))
+    bars.update_layout(template='plotly_white', separators=',.', showlegend=False,
+                       xaxis_title='Base de cálculo mediana (R$)', yaxis=dict(autorange='reversed'))
+    if ranked.empty:
+        bars.add_annotation(text='Nenhum bairro atende ao mínimo de registros.', x=.5, y=.5,
+                            xref='paper', yref='paper', showarrow=False)
+    for figure in (line, bars):
+        figure.update_layout(height=None, autosize=True, font=dict(size=11, color='#203858'),
+                             margin=dict(l=65, r=35, t=12, b=40), paper_bgcolor='white', plot_bgcolor='white')
+        figure.update_xaxes(gridcolor='#edf2f8', automargin=True)
+        figure.update_yaxes(gridcolor='#edf2f8', automargin=True)
+    line.update_layout(yaxis_title='R$', xaxis_title='Ano', legend=dict(orientation='h', y=1.02, yanchor='bottom'), margin_t=30)
+    bars.update_layout(margin=dict(l=130, r=95, t=6, b=40))
+    bars.update_xaxes(tickformat='~s')
+    summary = dict(total=int(len(period)), base_de_calculo=None if period.empty else float(period.base_de_calculo.median()),
+                   valor_m2=None if period.empty else float(period.valor_m2.median()))
+    kpis = []
+    for key, label, fmt in [('total', 'Total de registros', format_integer_br),
+                            ('base_de_calculo', 'Base de cálculo mediana', format_currency_br),
+                            ('valor_m2', 'Valor por m² mediano', format_currency_per_m2)]:
+        note = f'registros de apartamentos · {years[0]}–{years[1]}'
+        if key != 'total':
+            first = period.loc[period.ano.eq(years[0]), key].median()
+            last = period.loc[period.ano.eq(years[1]), key].median()
+            delta = (last / first - 1) * 100 if first > 0 and years[0] != years[1] else float('nan')
+            note = ('+' if pd.notna(delta) and delta > 0 else '') + format_percent(delta) + f' · {years[1]} vs. {years[0]}'
+            if years[0] == years[1]:
+                note = 'Mediana no ano selecionado'
+        kpis.append(dict(label=label, value=fmt(summary[key]), note=note))
+    row = stats.loc[focus] if focus else None
+    sufficient = row is not None and bool(row.suficiente)
+    selected = dict(name=focus, sufficient=sufficient,
+                    valor_m2=format_currency_per_m2(row.valor_m2 if sufficient else float('nan')),
+                    base_de_calculo=format_currency_br(row.base_de_calculo if sufficient else float('nan')),
+                    registros=format_integer_br(row.registros if row is not None else 0),
+                    mapped=bool(focus and focus in {f['properties']['bairro_oficial'] for f in boundaries['features']}))
+    m = build_overview_map(stats, boundaries, minimum, focus)
+    map_html = m.get_root().render().replace(
+        '.tickSize(1)', '.tickSize(1).tickFormat(value => new Intl.NumberFormat("pt-BR", {maximumFractionDigits:0}).format(value))')
+    return dict(summary=summary, kpis=kpis, line=json.loads(line.to_json()), bars=json.loads(bars.to_json()),
+                ranking=[dict(bairro=name, registros=int(row.registros), base_de_calculo=float(row.base_de_calculo)) for name, row in ranked.iterrows()],
+                map_html=map_html, focus=selected, eligible_count=len(eligible),
+                note='Os valores representam a base fiscal do ITBI e são utilizados como aproximação analítica; não equivalem necessariamente ao preço de mercado.')
