@@ -1,6 +1,6 @@
 # Escopo do dashboard — Atividade 02
 
-> **Proposta para o grupo validar.** Os itens marcados com ❓ precisam de decisão antes do desenvolvimento do app (T06–T12).
+> Proposta original; decisões implementadas estão registradas ao final.
 
 ## Público
 **Principal:** comprador / família em busca do 1º imóvel. Foi a motivação do grupo na Atividade 01 (seção 2) e é o perfil que o próprio grupo e seus conhecidos conseguem avaliar (seção 7).
@@ -33,7 +33,7 @@ Os gráficos 1 e 2 seguem o filtro de métrica (valor total ou valor/m²). O map
 
 ### Organização dos gráficos no código
 
-Cada visualização deve ter um construtor próprio em `charts.py`, que recebe os dados já filtrados e retorna o objeto da biblioteca correspondente. `app.py` organiza a página, aplica os filtros, trata seleções sem dados e renderiza cada objeto. Consulte [`docs/padroes_de-design.md`](padroes_de-design.md) para o padrão visual e a lista de responsabilidades.
+Cada visualização deve ter um construtor próprio em `charts.py`, que recebe os dados já filtrados e retorna o objeto da biblioteca correspondente. `app.py` organiza a página, aplica os filtros, trata seleções sem dados e renderiza cada objeto. Consulte [`docs/padroes_de_design.md`](padroes_de_design.md) para o padrão visual e a lista de responsabilidades.
 
 ## Controles interativos
 São exigidos pelo menos 2:
@@ -69,3 +69,19 @@ Estas mudanças devem ser citadas no "Registro do grupo".
 - `base_de_calculo` é a base fiscal do ITBI, usada como proxy de preço; não é o preço de mercado.
 - O corte P1–P99 remove cerca de 2% dos registros e pode descartar extremos legítimos.
 - O ano é o ano do arquivo do ITBI. As datas de estimativa de cada ano ficam dentro do próprio ano, e 2025 está completo (de 02/01 a 31/12).
+
+
+## Decisões implementadas em 28/09/2026
+P1, P2 e P3 são mantidas. O mapa único tem prioridade visual; os mapas anteriores são modos
+do explorador. Linhas Plotly respondem P1, barras Altair respondem P2 e Folium responde P3.
+Dispersão e tabela complementam. Boxplot e modelos preditivos não foram implementados.
+
+Transmissões parciais e JAR ITU SABARA são preservados. Usam-se nomes oficiais quando há
+correspondência. Foram incluídos filtros de área e construção, com controle de ausentes.
+Mínimo padrão: 100. População inicial: todos os 116.198 registros preparados.
+
+Compatibilidade usa contexto (período/bairros) como denominador e perfil (valor/área/
+construção) como numerador. O mínimo se aplica ao denominador para compatibilidade,
+à amostra filtrada para medianas/contagem e a ambos os extremos para variação.
+A referência da cidade aplica período e perfil, abrangendo todos os bairros.
+O período corresponde ao ano da base. Valores nominais e composição são explicitados.

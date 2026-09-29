@@ -1,5 +1,19 @@
 # Padrão de design e visualizações do dashboard
 
+## Grade desktop em uma tela
+
+A composição atual usa `100dvh`, cabeçalho de 56–64 px, margens de 8–10 px e linhas
+22/48/30. O mapa ocupa uma coluna vertical nas duas primeiras linhas; indicadores ficam
+acima da evolução e dispersão, que recebem prioridade de altura para leitura do eixo Y.
+Barras e comparação ocupam a linha inferior. Painéis têm `min-height: 0` e `min-width: 0`. Fundo cinza claro, cartões brancos,
+bordas discretas, títulos azul-marinho, seleção vermelha e deltas positivos verdes,
+sempre acompanhados de texto. Não usar escala global nem ocultar overflow da página.
+
+Os gráficos recebem dimensões reais por ResizeObserver. O mapa é reenquadrado após resize,
+com zoom fracionário e tooltip contido na área visível. Ranking tem limite explícito;
+seletores múltiplos e metodologia usam diálogos. A navegação destaca os painéis existentes.
+Usar o brasão real; não há fotografia de bairro disponível.
+
 Este documento orienta a identidade visual, a interação e a implementação das visualizações do dashboard de ITBI de Porto Alegre. O público principal são compradores e famílias em busca do primeiro imóvel; corretores e avaliadores são públicos secundários. A interface deve facilitar comparação e leitura de dados, sem parecer uma página promocional.
 
 ## Identidade visual
@@ -51,7 +65,7 @@ Para o mapa por bairro:
 - Mantenha todos os polígonos oficiais do GeoJSON, mesmo quando não houver transações no período selecionado.
 - Use a mediana do valor por m² por `bairro_oficial`; mantenha uma escala ordenada, legenda em R$/m² e tooltip com bairro e valor.
 - Mostre áreas sem dados com uma cor neutra distinta da escala. Não as confunda com valores baixos ou zero.
-- No mapa de valor por m², enquadre a visualização nos limites municipais e destaque o contorno externo, sem mapa-base.
+- No mapa unificado, enquadre os polígonos oficiais e use OpenStreetMap com opacidade de 50%; destaque o bairro em foco com contorno azul.
 - No mapa de quantidade de registros, mantenha o mapa-base original com opacidade de 50% em toda a área. Use a escala roxa do mais claro ao mais escuro `#E0AAFF` → `#C77DFF` → `#9D4EDD` → `#7B2CBF` → `#5A189A` → `#3C096C` → `#240046` → `#100028`; valores maiores devem usar tons mais escuros. Os preenchimentos roxos e brancos usam opacidade fixa de 80%; mantenha os limites pretos sólidos.
 - Categorias sem geometria, como `JAR ITU SABARA`, não podem ser desenhadas. Informe-as separadamente; não atribua seus registros a outro bairro.
 
@@ -92,3 +106,11 @@ st.plotly_chart(build_yearly_median_chart(df_filtrado), width="stretch")
 - Faça títulos, rótulos e valores caberem em desktop e celular; prefira quebra de linha a corte ou sobreposição.
 - Valide cálculos com `check_data.py` quando houver valores de referência. Use `AppTest` ou execute o app para confirmar que a visualização renderiza sem exceções.
 - Revise combinações de filtros, seleção vazia, dados ausentes e categorias sem geometria antes de considerar um gráfico concluído.
+
+## Explorador territorial
+Cabeçalho com brasão, mapa à esquerda e painel de foco à direita, análises complementares
+abaixo. Um mapa selecionável, mantendo YlOrRd para medianas e roxo para contagem.
+Variação usa escala divergente simétrica em torno de zero. Cinza distingue dados ausentes
+ou insuficientes. Tooltip informa cobertura e quantidades. Deltas são neutros.
+Selectbox oferece seleção estável de bairro. Não há fotos ou números ilustrativos.
+metrics.py reúne cálculos compartilhados; charts.py permanece sem chamadas st.*.
