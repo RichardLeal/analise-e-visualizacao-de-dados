@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Mapa Imobiliário POA</title>
+  <link rel="stylesheet" href="dashboard.css">
+  <script defer src="vendor/plotly.min.js"></script>
+  <script defer src="vendor/vega.min.js"></script>
+  <script defer src="vendor/vega-lite.min.js"></script>
+  <script defer src="vendor/vega-embed.min.js"></script>
+  <script defer src="dashboard.js"></script>
+</head>
+<body>
+<div id="dashboard">
+  <header class="header">
+    <div class="brand"><img id="crest" alt="Brasão de Porto Alegre"><div><h1>MAPA IMOBILIÁRIO POA</h1><p>Explorador territorial de apartamentos e registros de ITBI</p></div></div>
+    <nav aria-label="Navegação"><button data-panel="map-panel" class="active">Mapa</button><button data-panel="line-panel">Análise de bairros</button><button data-panel="comparison-panel">Comparação</button><button id="about-button">Sobre os dados</button></nav>
+    <div class="total"><strong id="total">—</strong><span>registros · 2020–2025</span></div>
+  </header>
+  <aside class="filters card">
+    <h2>Recorte de interesse</h2><p class="muted">Explore os registros históricos do ITBI.</p>
+    <div id="ranges"></div>
+    <div class="construction-flags"><label><input type="checkbox" id="construction-active"> Filtrar construção</label><label><input type="checkbox" id="include-missing"> Incluir ano ausente</label></div>
+    <div class="control"><label>Bairros</label><button id="neighborhoods" class="select-button">Todos os bairros ▾</button></div>
+    <div class="control inline"><label for="minimum">Mínimo de registros</label><input type="number" id="minimum" min="1" max="116199" step="1"></div>
+    <button id="reset" class="reset">↻ Limpar filtros</button>
+    <div class="map-metric"><h2>Métrica do mapa</h2><div id="map-metrics"></div></div>
+    <p class="muted sidebar-note">Base fiscal do ITBI. Não representa oferta atual nem preço de mercado.</p>
+  </aside>
+  <main class="panels">
+    <section class="card map-panel" id="map-panel" tabindex="-1">
+      <div class="panel-heading"><h2 id="map-title">Valor por m² mediano por bairro</h2><button class="help" data-help="map">ⓘ</button></div>
+      <p id="context-note" class="muted"></p>
+      <div class="map-slot"><iframe id="map" title="Mapa dos bairros de Porto Alegre" sandbox="allow-scripts allow-same-origin"></iframe><div id="empty" role="status" hidden>Nenhum apartamento atende aos filtros selecionados.</div></div>
+      <p id="map-note" class="footnote"></p>
+    </section>
+    <section class="card focus-panel" id="focus-panel">
+      <div class="panel-heading"><h2>Bairro em foco</h2><select id="focus" aria-label="Bairro em foco"></select><img id="focus-crest" alt="Brasão municipal" class="focus-crest"></div>
+      <div class="kpis" id="kpis"></div>
+      <p class="footnote" id="focus-note"></p>
+    </section>
+    <section class="card line-panel" id="line-panel" tabindex="-1">
+      <div class="panel-heading"><h2>Evolução temporal</h2><select id="line-metric" aria-label="Métrica temporal"></select><button class="help" data-help="line">ⓘ</button></div>
+      <div class="plot-slot" id="line"></div>
+    </section>
+    <section class="card scatter-panel" id="scatter-panel">
+      <div class="panel-heading"><h2>Posicionamento dos bairros</h2><span class="muted">Um ponto por bairro</span><button class="help" data-help="scatter">ⓘ</button></div>
+      <div class="plot-slot" id="scatter"></div>
+    </section>
+    <section class="card bars-panel" id="bars-panel">
+      <div class="panel-heading"><h2>Medianas por bairro</h2><select id="bar-metric" aria-label="Métrica das barras"></select><select id="order" aria-label="Ordenação"><option value="desc">Maiores</option><option value="asc">Menores</option></select></div>
+      <div class="plot-slot" id="bars"></div><p class="footnote" id="bar-limit"></p>
+    </section>
+    <section class="card comparison-panel" id="comparison-panel" tabindex="-1">
+      <div class="panel-heading"><h2>Comparar bairros</h2><button id="comparison" class="select-button">Selecionar até 4 ▾</button><button class="help" data-help="comparison">ⓘ</button></div>
+      <div class="table-slot"><table id="comparison-table"></table></div>
+    </section>
+  </main>
+</div>
+<dialog id="picker"><div class="dialog-heading"><h2 id="picker-title"></h2><button id="picker-close" aria-label="Fechar">✕</button></div><input id="picker-search" placeholder="Pesquisar bairro" aria-label="Pesquisar bairro"><p class="muted" id="picker-count"></p><div id="picker-options"></div><div class="dialog-actions"><button id="picker-clear">Limpar seleção</button><button id="picker-apply">Aplicar</button></div></dialog>
+<dialog id="info"><div class="dialog-heading"><h2 id="info-title"></h2><button id="info-close" aria-label="Fechar">✕</button></div><div id="info-content"></div></dialog>
+<div id="loading" role="status" hidden>Atualizando recorte…</div>
+<div id="error" role="alert" hidden></div>
+</body>
+</html>

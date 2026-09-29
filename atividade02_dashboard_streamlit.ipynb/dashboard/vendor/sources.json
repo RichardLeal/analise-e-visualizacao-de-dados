@@ -1,0 +1,18 @@
+{
+  "plotly.min.js": {
+    "source": "plotly.offline.get_plotlyjs(), plotly==7.1.0",
+    "sha256": "d1b35fcc41b2eb43a7804f6317e5c73761c26d1724810ae695690dd92a73fa1e"
+  },
+  "vega.min.js": {
+    "source": "https://cdn.jsdelivr.net/npm/vega@6/build/vega.min.js",
+    "sha256": "8f6a3587cf8d4f42c7e08120e3eb05d067e746d554e39d2dcf52acc0bd5ba28f"
+  },
+  "vega-lite.min.js": {
+    "source": "https://cdn.jsdelivr.net/npm/vega-lite@6.4.1/build/vega-lite.min.js",
+    "sha256": "6d5035fdd429b4bc6f91f3754426c3f516f3dbd8e08b105cfc2496bed4ebd254"
+  },
+  "vega-embed.min.js": {
+    "source": "https://cdn.jsdelivr.net/npm/vega-embed@7/build/vega-embed.min.js",
+    "sha256": "b1455caba2fb1a72fb46025ba0ba1316e2dbc7f0dd40a3f6040172bf9c08ba91"
+  }
+}
