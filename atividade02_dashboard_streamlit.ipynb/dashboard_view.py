@@ -60,8 +60,9 @@ def build_payload(df, boundaries, state):
         ("construcao", "Ano de construção", format_year), ("registros", "Registros", format_integer_br),
         ("variacao", "Variação no período", format_percent)]:
         rows.append(dict(label=label, values=[fmt(v) for v in table[key]]))
-    line_names = list(dict.fromkeys(([focus] if focus else []) + state["comparison"]))[:4]
-    line = build_yearly_median_chart(filtered, state["line_metric"], line_names, city, years, minimum)
+    line_names = state["comparison"][:4] or ([focus] if focus else [])
+    line_source = city.loc[city.bairro_oficial.isin(line_names)]
+    line = build_yearly_median_chart(line_source, state["line_metric"], line_names, city, years, minimum)
     scatter = build_neighborhood_scatter(stats, focus)
     for figure in (line, scatter):
         figure.update_layout(height=None, autosize=True, font=dict(size=11, color="#203858"),

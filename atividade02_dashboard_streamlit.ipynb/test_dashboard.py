@@ -87,7 +87,6 @@ class Interface(unittest.TestCase):
         self.assertTrue(result["empty"])
         self.assertEqual(default_state(d)["years"], [2020, 2025])
 
-
 class Overview(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -157,6 +156,23 @@ class Overview(unittest.TestCase):
             self.assertEqual(r['overview']['focus']['name'], 'MENINO DEUS')
             self.assertIn('scatter', r)
             self.assertEqual(r['compared'], ['MENINO DEUS'])
+    def test_temporal_chart_includes_focus_and_comparisons(self):
+        from dashboard_view import build_payload, default_state
+        names = ["NAVEGANTES", "HUMAITÁ", "SÃO GERALDO", "FLORESTA"]
+        result = build_payload(
+            self.df,
+            self.boundaries,
+            {
+                **self.defaults,
+                "neighborhoods": names,
+                "focus": "PETRÓPOLIS",
+                "comparison": names,
+            },
+        )
+        traces = {trace["name"]: trace for trace in result["line"]["data"]}
+        self.assertEqual(set(names), set(traces) - {"Porto Alegre"})
+        for name in names:
+            self.assertTrue(any(value is not None for value in traces[name]["y"]))
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
